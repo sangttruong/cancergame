@@ -1,5 +1,6 @@
 import numpy as np
 from numpy import linalg as LA
+import math
 ## The code partially reproduces Figure 3 from paper
 # Optimizing adaptive cancer therapy: dynamic programming and evolutionary game theory,
 # Proceedings of the Royal Society B: Biological Sciences 287: 20192454 (2020)
@@ -11,103 +12,6 @@ from numpy import linalg as LA
 # Produce optimal control in feedback form and the value function
 # for a model of lung cancer proposed by Kaznatcheev et al. [1]
 def Figure3():
-    ## Model parameters
-    d_max = 3 # MTD
-    sigma = 0.01 # time penalty
-    ba = 2.5 # the benefit per unit of acidification
-    bv = 2 # the benefit from the oxygen per unit of vascularization
-    c = 1 # the cost of production VEGF
-    n_neigh = 4 #the number of cells in the interaction group.
-    fb = 10**(-1.5) # failure barrier, recovery barrier
-    
-    ## Discretization parameters
-    n = 9000 # number of meshpoints along one side
-    h = 1 / n
-    # the algorithm terminates when the difference between value functions
-    # in sequential iterations falls below 'iter_tol'
-    iter_tol = 10**(-4)
-    
-    hugeVal = 100000 # a large number ~ infinity
-    tinyVal = 10**(-10) # a small number ~ 0
-    
-    ## Initiallization
-    d_matr = np.zeros((n+1,n+1)) # control
-    u = u_initiation() # value function
-
-    ## Main part
-    change = hugeVal # current difference between value functions in sequential iterations
-    k = 0 # iteration number
-    while (change > iter_tol):
-        change = 0
-
-        # alternating meshpoint orderings (“Fast Sweeping”)
-        if (k%4 == 0):
-            irange = range(0,n+1)
-            jrange = range(0,n+1)
-        elif (k%4 == 1):
-            irange = range(0,n+1)
-            jrange = range(n,0,-1)
-        elif (k%4 == 2):
-            irange = range(n,0,-1)
-            jrange = range(n,0,-1)
-        elif (k%4 == 3):
-            irange = range(n,0,-1)
-            jrange = range(0,n+1)
-        else:
-            print('weird k')
-        
-        
-        for i in irange:
-            for j in jrange:
-            
-                if (i+j > n): # skip the half of the domain if x1+x2 > 1
-                    d_matr[i+1][j+1] = np.nan
-                    continue
-                
-                x1 = i*h
-                x2 = j*h
-                x = np.array([x1, x2])
-                if (x2 > fb) and (x2 < 1-fb): # skip fixed recovery and failure zones
-                    
-                    u_new = hugeVal
-                    for d in [0, d_max]:
-                        if (LA.norm(f(x, d))==0):
-                            continue
-                    
-                        tau = tau_func(x, d, i, j)
-                        xtilde = x + tau * f(x, d) # new state
-                        # value of u under control d
-                        u_possible = tau * K(x, d) + u_interped(u, xtilde, i , j)
-                        
-                        if (u_possible < u_new):
-                            u_new = u_possible
-                            d_new = d
-                        
-                    
-                    
-                    #update the value function u at state x
-                    if (u_new < u[i][j]):
-                        this_change = u[i+1][j+1] - u_new
-                        u[i][j] = u_new
-                        d_matr[i][j] = d_new
-                        if (this_change > change):
-                            change = this_change
-        
-        k = k + 1
-        # print the current difference between value functions in sequential iterations
-        change
-    
-    
-    
-    
-    ## Visualization of the optimal control and value function
-    ###show_plots()
-    
-    
-    ## Helping functions
-    
-    
-    ## Initializaion of the value function u
     def u_initiation():
         u = np.ones((n+1,n+1))*hugeVal
 
@@ -162,14 +66,14 @@ def Figure3():
             y = h / abs(func[0])
         else:
             if (func[0] * func[1] > 0):
-                x1_int = [(i+sign(func[0])) * h, j * h]
-                x2_int = [i * h, (j+sign(func[1])) * h]
+                x1_int = [(i+np.sign(func[0])) * h, j * h]
+                x2_int = [i * h, (j+np.sign(func[1])) * h]
             elif (abs(func[1]) > abs(func[0])):
-                x1_int = [(i+sign(func[0])) * h, (j + sign(func[1])) * h]
-                x2_int = [i * h, (j+sign(func[1])) * h]
+                x1_int = [(i+np.np.sign(func[0])) * h, (j + np.sign(func[1])) * h]
+                x2_int = [i * h, (j+np.sign(func[1])) * h]
             else:
-                x1_int = [(i+sign(func[0])) * h, j * h]
-                x2_int = [(i+sign(func[0])) * h, (j + sign(func[1])) * h]
+                x1_int = [(i+np.sign(func[0])) * h, j * h]
+                x2_int = [(i+np.sign(func[0])) * h, (j + np.sign(func[1])) * h]
             
             k1 = x2_int[0] - x1_int[0]
             k2 = x1_int[1] - x2_int[1]
@@ -186,7 +90,7 @@ def Figure3():
     # u interped at (x + tau * f(x,b))
     def u_interped(u, xtilde, i, j):
         
-        dist = h*sqrt(2)
+        dist = h*math.sqrt(2)
         
         # there are 6 possible combinations of 2 neighboring meshpoints.
         
@@ -291,6 +195,104 @@ def Figure3():
     end
 
     '''
+    ## Model parameters
+    d_max = 3 # MTD
+    sigma = 0.01 # time penalty
+    ba = 2.5 # the benefit per unit of acidification
+    bv = 2 # the benefit from the oxygen per unit of vascularization
+    c = 1 # the cost of production VEGF
+    n_neigh = 4 #the number of cells in the interaction group.
+    fb = 10**(-1.5) # failure barrier, recovery barrier
+    
+    ## Discretization parameters
+    n = 9000 # number of meshpoints along one side
+    h = 1 / n
+    # the algorithm terminates when the difference between value functions
+    # in sequential iterations falls below 'iter_tol'
+    iter_tol = 10**(-4)
+    
+    hugeVal = 100000 # a large number ~ infinity
+    tinyVal = 10**(-10) # a small number ~ 0
+    
+    ## Initiallization
+    d_matr = np.zeros((n+1,n+1)) # control
+    u = u_initiation() # value function
+
+    ## Main part
+    change = hugeVal # current difference between value functions in sequential iterations
+    k = 0 # iteration number
+    while (change > iter_tol):
+        change = 0
+
+        # alternating meshpoint orderings (“Fast Sweeping”)
+        if (k%4 == 0):
+            irange = range(0,n+1)
+            jrange = range(0,n+1)
+        elif (k%4 == 1):
+            irange = range(0,n+1)
+            jrange = range(n,0,-1)
+        elif (k%4 == 2):
+            irange = range(n,0,-1)
+            jrange = range(n,0,-1)
+        elif (k%4 == 3):
+            irange = range(n,0,-1)
+            jrange = range(0,n+1)
+        else:
+            print('weird k')
+        
+        
+        for i in irange:
+            for j in jrange:
+            
+                if (i+j > n): # skip the half of the domain if x1+x2 > 1
+                    d_matr[i][j+1] = np.nan
+                    continue
+                
+                x1 = i*h
+                x2 = j*h
+                x = np.array([x1, x2])
+                if (x2 > fb) and (x2 < 1-fb): # skip fixed recovery and failure zones
+                    
+                    u_new = hugeVal
+                    for d in [0, d_max]:
+                        if (LA.norm(f(x, d))==0):
+                            continue
+                    
+                        tau = tau_func(x, d, i, j)
+                        xtilde = x + tau * f(x, d) # new state
+                        # value of u under control d
+                        u_possible = tau * K(x, d) + u_interped(u, xtilde, i , j)
+                        
+                        if (u_possible < u_new):
+                            u_new = u_possible
+                            d_new = d
+                        
+                    
+                    
+                    #update the value function u at state x
+                    if (u_new < u[i][j]):
+                        this_change = u[i][j] - u_new
+                        u[i][j] = u_new
+                        d_matr[i][j] = d_new
+                        if (this_change > change):
+                            change = this_change
+        
+        k = k + 1
+        # print the current difference between value functions in sequential iterations
+        print(change)
+    
+    
+    
+    
+    ## Visualization of the optimal control and value function
+    ###show_plots()
+    
+    
+    ## Helping functions
+    
+    
+    ## Initializaion of the value function u
+
 
 
 ## References

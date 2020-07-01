@@ -1,6 +1,8 @@
 import numpy as np
 from numpy import linalg as LA
 import math
+import matplotlib.pyplot as plt
+from matplotlib import cm
 ## The code partially reproduces Figure 3 from paper
 # Optimizing adaptive cancer therapy: dynamic programming and evolutionary game theory,
 # Proceedings of the Royal Society B: Biological Sciences 287: 20192454 (2020)
@@ -12,6 +14,11 @@ import math
 # Produce optimal control in feedback form and the value function
 # for a model of lung cancer proposed by Kaznatcheev et al. [1]
 def Figure3():
+    
+    ## Helping functions
+    
+    ## Initializaion of the value function u
+
     def u_initiation():
         u = np.ones((n+1,n+1))*hugeVal
 
@@ -27,7 +34,7 @@ def Figure3():
                 if  (jj*h < fb):
                     u[ii][jj] = 0
         return u
-
+    
     ## Instantaneous cost 
     def K(_, d):
         y  = d + sigma
@@ -69,7 +76,7 @@ def Figure3():
                 x1_int = [(i+np.sign(func[0])) * h, j * h]
                 x2_int = [i * h, (j+np.sign(func[1])) * h]
             elif (abs(func[1]) > abs(func[0])):
-                x1_int = [(i+np.np.sign(func[0])) * h, (j + np.sign(func[1])) * h]
+                x1_int = [(i+np.sign(func[0])) * h, (j + np.sign(func[1])) * h]
                 x2_int = [i * h, (j+np.sign(func[1])) * h]
             else:
                 x1_int = [(i+np.sign(func[0])) * h, j * h]
@@ -83,8 +90,9 @@ def Figure3():
         
         if (np.isnan(y) or np.isinf(y) or (y <= 0)):
             print('Cannot compute Tau!')
+            y = 0
         
-        return None
+        return y
     
     ## Return value funcion at state xtilde
     # u interped at (x + tau * f(x,b))
@@ -111,90 +119,86 @@ def Figure3():
         if (xtilde[0] >= i*h) and (xtilde[1] > j*h):
             x1_int = [i*h, (j+1)*h]
             gamma = LA.norm(xtilde-x1_int) / dist
-            y = u(i, j+1)*(1-gamma) + u(i+1, j)*gamma
+            y = u[i][j+1]*(1-gamma) + u[i+1][j]*gamma
             #2
         elif (xtilde[0] <= i*h) and (xtilde[1] < j*h) and (i!=0):
             x1_int = [i*h, (j-1)*h]
             gamma = LA.norm(xtilde-x1_int) / dist
-            y = u(i, j-1)*(1-gamma) + u(i-1, j)*gamma    
+            y = u[i][j-1]*(1-gamma) + u[i-1][j]*gamma    
             #3
         elif (xtilde[0] != i*h) and (abs(xtilde[1] - (j+1)*h) < tinyVal):
             x1_int = [(i-1)*h, (j+1)*h]
             gamma = LA.norm(xtilde-x1_int) / h
-            y = u(i-1, j+1)*(1-gamma) + u(i, j+1)*gamma
+            y = u[i-1][j+1]*(1-gamma) + u[i][j+1]*gamma
             #4
         elif (abs(xtilde[0] - (i-1)*h) < tinyVal) and (xtilde[1] != (j+1)*h):
             x1_int = [(i-1)*h, j*h]
             gamma = LA.norm(xtilde-x1_int) / h
-            y = u(i-1, j)*(1-gamma) + u(i-1, j+1)*gamma  
+            y = u[i-1][j]*(1-gamma) + u[i-1][j+1]*gamma  
             #5
         elif (xtilde[0] != i*h) and (abs(xtilde[1] - (j-1)*h) < tinyVal):
             x1_int = [(i+1)*h, (j-1)*h]
             gamma = LA.norm(xtilde-x1_int) / h
-            y = u(i+1, j-1)*(1-gamma) + u(i, j-1)*gamma
+            y = u[i+1][j-1]*(1-gamma) + u[i][j-1]*gamma
             #6
         elif (abs(xtilde[0] - (i+1)*h) < tinyVal) and (xtilde[1] != (j-1)*h):
             x1_int = [(i+1)*h, j*h]
             gamma = LA.norm(xtilde-x1_int) / h
-            y = u(i+1, j)*(1-gamma) + u(i+1, j-1)*gamma
+            y = u[i+1][j]*(1-gamma) + u[i+1][j-1]*gamma
         elif (i==0) and (xtilde[1] < j*h):
-            y = u(i, j-1)
+            y = u[i][j-1]
         elif (i==0) and (xtilde[1] > j*h):
-            y = u(i, j+1)
+            y = u[i][j+1]
         else:
             print('We are not in any quadrant at all!')
-            y = None
+            y = 0
         
         return y
     
     ## Visualization of the optimal control and value function
-    '''
+    
     def show_plots():
         
-        [X,Y] = meshgrid(0:h:1, 0:h:1)
-        [X,Y] = transf(X',Y') # transformation into a regular triangular mesh
+        [X,Y] = np.meshgrid(np.arange(0.0,1.0 + h,h), np.arange(0.0,1.0 + h,h))
+        [X,Y] = transf(X.conj().transpose(),Y.conj().transpose()) # transformation into a regular triangular mesh
         uu = u
-        for ii = 0:n
-            for jj = 0:n
-                if jj*h < fb  || jj*h > 1- fb
-                    uu(ii+1, jj+1) = NaN
-                end
-                if uu(ii+1, jj+1)>10
-                    uu(ii+1, jj+1)=10
-                end
-                
-            end
-        end
+        for ii in range(0,n+1):
+            for jj in range(0,n+1):
+                if ((jj*h < fb)  or (jj*h > 1- fb)):
+                    uu[ii][jj] = np.nan
+                if (uu[ii][jj]>10):
+                    uu[ii][jj]=10
+                 
+        fig = plt.figure(figsize=(6,6))
+        #mymap = [parula(2)  0, 1, 0]
+        #colormap(mymap)
+        plt.pcolor(X, Y, d_matr)# plot optimal control
+        #hold on(draw 2 figures on the same graph)
+        #contour(X, Y, uu, 'r')# plot value function
+        plt.contour(X,Y,uu,colors=['red'],cmap=plt.get_cmap('pastel1'))
+        plt.axis([0,1,0,1]) #axis([0 1 0 1])
+        plt.show(fig)
+        #shading flat
 
-        figure
-        mymap = [parula(2)  0, 1, 0]
-        colormap(mymap)
-        pcolor(X, Y, d_matr)# plot optimal control
-        hold on
-        contour(X, Y, uu, 'r')# plot value function
-        axis equal
-        axis([0 1 0 1])
-        shading flat
-
-    end
-    '''
+    
     
     ## Transformation to simplex x1 + x2 + x3 = 1
-    '''
-    function [X_tr,Y_tr]=transf(X,Y)
+    
+    def transf(X,Y):
 
-        T=[1 1/2 0 sqrt(3)/2] # linear transformation into a regular triangular mesh
-        X_tr=X Y_tr=Y
-        for i1 = 1:length(X(:,1))
-            for i2 = 1:length(X(:,1))
-                var=(T*[X(i1,i2), Y(i1,i2)]')'
-                X_tr(i1,i2)=var(1)
-                Y_tr(i1,i2)=var(2)
-            end
-        end
-    end
+        T= np.array([[1, 1/2], 
+                     [0, math.sqrt(3)/2]]) # linear transformation into a regular triangular mesh
+        X_tr=X 
+        Y_tr=Y
+        for i1 in range(1, len(X[:,0])):
+            for i2 in range(1, len(X[:,0])):
+                var = np.matmul(T,np.array([X[i1-1][i2-1], Y[i1-1][i2-1]]).conj().transpose()).conj().transpose()
+                X_tr[i1-1][i2-1]=var[0]
+                Y_tr[i1-1][i2-1]=var[1]
+            
+        return np.array([X_tr,Y_tr])
 
-    '''
+    
     ## Model parameters
     d_max = 3 # MTD
     sigma = 0.01 # time penalty
@@ -245,7 +249,7 @@ def Figure3():
             for j in jrange:
             
                 if (i+j > n): # skip the half of the domain if x1+x2 > 1
-                    d_matr[i][j+1] = np.nan
+                    d_matr[i][j] = np.nan
                     continue
                 
                 x1 = i*h
@@ -285,14 +289,9 @@ def Figure3():
     
     
     ## Visualization of the optimal control and value function
-    ###show_plots()
+        show_plots()
     
     
-    ## Helping functions
-    
-    
-    ## Initializaion of the value function u
-
 
 
 ## References

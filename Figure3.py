@@ -1,5 +1,8 @@
 import numpy as np
 from numpy import linalg as LA
+import math
+import matplotlib.pyplot as plt
+from matplotlib import cm
 ## The code partially reproduces Figure 3 from paper
 # Optimizing adaptive cancer therapy: dynamic programming and evolutionary game theory,
 # Proceedings of the Royal Society B: Biological Sciences 287: 20192454 (2020)
@@ -11,103 +14,11 @@ from numpy import linalg as LA
 # Produce optimal control in feedback form and the value function
 # for a model of lung cancer proposed by Kaznatcheev et al. [1]
 def Figure3():
-    ## Model parameters
-    d_max = 3 # MTD
-    sigma = 0.01 # time penalty
-    ba = 2.5 # the benefit per unit of acidification
-    bv = 2 # the benefit from the oxygen per unit of vascularization
-    c = 1 # the cost of production VEGF
-    n_neigh = 4 #the number of cells in the interaction group.
-    fb = 10**(-1.5) # failure barrier, recovery barrier
-    
-    ## Discretization parameters
-    n = 9000 # number of meshpoints along one side
-    h = 1 / n
-    # the algorithm terminates when the difference between value functions
-    # in sequential iterations falls below 'iter_tol'
-    iter_tol = 10**(-4)
-    
-    hugeVal = 100000 # a large number ~ infinity
-    tinyVal = 10**(-10) # a small number ~ 0
-    
-    ## Initiallization
-    d_matr = np.zeros((n+1,n+1)) # control
-    u = u_initiation() # value function
-
-    ## Main part
-    change = hugeVal # current difference between value functions in sequential iterations
-    k = 0 # iteration number
-    while (change > iter_tol):
-        change = 0
-
-        # alternating meshpoint orderings (“Fast Sweeping”)
-        if (k%4 == 0):
-            irange = range(0,n+1)
-            jrange = range(0,n+1)
-        elif (k%4 == 1):
-            irange = range(0,n+1)
-            jrange = range(n,0,-1)
-        elif (k%4 == 2):
-            irange = range(n,0,-1)
-            jrange = range(n,0,-1)
-        elif (k%4 == 3):
-            irange = range(n,0,-1)
-            jrange = range(0,n+1)
-        else:
-            print('weird k')
-        
-        
-        for i in irange:
-            for j in jrange:
-            
-                if (i+j > n): # skip the half of the domain if x1+x2 > 1
-                    d_matr[i+1][j+1] = np.nan
-                    continue
-                
-                x1 = i*h
-                x2 = j*h
-                x = np.array([x1, x2])
-                if (x2 > fb) and (x2 < 1-fb): # skip fixed recovery and failure zones
-                    
-                    u_new = hugeVal
-                    for d in [0, d_max]:
-                        if (LA.norm(f(x, d))==0):
-                            continue
-                    
-                        tau = tau_func(x, d, i, j)
-                        xtilde = x + tau * f(x, d) # new state
-                        # value of u under control d
-                        u_possible = tau * K(x, d) + u_interped(u, xtilde, i , j)
-                        
-                        if (u_possible < u_new):
-                            u_new = u_possible
-                            d_new = d
-                        
-                    
-                    
-                    #update the value function u at state x
-                    if (u_new < u[i][j]):
-                        this_change = u[i+1][j+1] - u_new
-                        u[i][j] = u_new
-                        d_matr[i][j] = d_new
-                        if (this_change > change):
-                            change = this_change
-        
-        k = k + 1
-        # print the current difference between value functions in sequential iterations
-        change
-    
-    
-    
-    
-    ## Visualization of the optimal control and value function
-    ###show_plots()
-    
     
     ## Helping functions
     
-    
     ## Initializaion of the value function u
+
     def u_initiation():
         u = np.ones((n+1,n+1))*hugeVal
 
@@ -123,7 +34,7 @@ def Figure3():
                 if  (jj*h < fb):
                     u[ii][jj] = 0
         return u
-
+    
     ## Instantaneous cost 
     def K(_, d):
         y  = d + sigma
@@ -162,31 +73,31 @@ def Figure3():
             y = h / abs(func[0])
         else:
             if (func[0] * func[1] > 0):
-                x1_int = [(i+sign(func[0])) * h, j * h]
-                x2_int = [i * h, (j+sign(func[1])) * h]
+                x1_int = [(i+np.sign(func[0])) * h, j * h]
+                x2_int = [i * h, (j+np.sign(func[1])) * h]
             elif (abs(func[1]) > abs(func[0])):
-                x1_int = [(i+sign(func[0])) * h, (j + sign(func[1])) * h]
-                x2_int = [i * h, (j+sign(func[1])) * h]
+                x1_int = [(i+np.sign(func[0])) * h, (j + np.sign(func[1])) * h]
+                x2_int = [i * h, (j+np.sign(func[1])) * h]
             else:
-                x1_int = [(i+sign(func[0])) * h, j * h]
-                x2_int = [(i+sign(func[0])) * h, (j + sign(func[1])) * h]
+                x1_int = [(i+np.sign(func[0])) * h, j * h]
+                x2_int = [(i+np.sign(func[0])) * h, (j + np.sign(func[1])) * h]
             
             k1 = x2_int[0] - x1_int[0]
             k2 = x1_int[1] - x2_int[1]
             kc = - (x1_int[1] * k1 + x1_int[0] * k2)
             y = - (kc + k1*x[1] + k2*x[0]) / (k1*func[1] + k2*func[0])
-            return y
         
         if (np.isnan(y) or np.isinf(y) or (y <= 0)):
             print('Cannot compute Tau!')
+            y = 0
         
-        return None
+        return y
     
     ## Return value funcion at state xtilde
     # u interped at (x + tau * f(x,b))
     def u_interped(u, xtilde, i, j):
         
-        dist = h*sqrt(2)
+        dist = h*math.sqrt(2)
         
         # there are 6 possible combinations of 2 neighboring meshpoints.
         
@@ -205,92 +116,180 @@ def Figure3():
           
             #1
         if (xtilde[0] >= i*h) and (xtilde[1] > j*h):
-            x1_int = [i*h, (j+1)*h]
+            x1_int = np.array([i*h, (j+1)*h])
             gamma = LA.norm(xtilde-x1_int) / dist
-            y = u(i, j+1)*(1-gamma) + u(i+1, j)*gamma
+            y = u[i][j+1]*(1-gamma) + u[i+1][j]*gamma
             #2
         elif (xtilde[0] <= i*h) and (xtilde[1] < j*h) and (i!=0):
-            x1_int = [i*h, (j-1)*h]
+            x1_int = np.array([i*h, (j-1)*h])
             gamma = LA.norm(xtilde-x1_int) / dist
-            y = u(i, j-1)*(1-gamma) + u(i-1, j)*gamma    
+            y = u[i][j-1]*(1-gamma) + u[i-1][j]*gamma    
             #3
         elif (xtilde[0] != i*h) and (abs(xtilde[1] - (j+1)*h) < tinyVal):
-            x1_int = [(i-1)*h, (j+1)*h]
+            x1_int = np.array([(i-1)*h, (j+1)*h])
             gamma = LA.norm(xtilde-x1_int) / h
-            y = u(i-1, j+1)*(1-gamma) + u(i, j+1)*gamma
+            y = u[i-1][j+1]*(1-gamma) + u[i][j+1]*gamma
             #4
         elif (abs(xtilde[0] - (i-1)*h) < tinyVal) and (xtilde[1] != (j+1)*h):
-            x1_int = [(i-1)*h, j*h]
+            x1_int = np.array([(i-1)*h, j*h])
             gamma = LA.norm(xtilde-x1_int) / h
-            y = u(i-1, j)*(1-gamma) + u(i-1, j+1)*gamma  
+            y = u[i-1][j]*(1-gamma) + u[i-1][j+1]*gamma  
             #5
         elif (xtilde[0] != i*h) and (abs(xtilde[1] - (j-1)*h) < tinyVal):
-            x1_int = [(i+1)*h, (j-1)*h]
+            x1_int = np.array([(i+1)*h, (j-1)*h])
             gamma = LA.norm(xtilde-x1_int) / h
-            y = u(i+1, j-1)*(1-gamma) + u(i, j-1)*gamma
+            y = u[i+1][j-1]*(1-gamma) + u[i][j-1]*gamma
             #6
         elif (abs(xtilde[0] - (i+1)*h) < tinyVal) and (xtilde[1] != (j-1)*h):
-            x1_int = [(i+1)*h, j*h]
+            x1_int = np.array([(i+1)*h, j*h])
             gamma = LA.norm(xtilde-x1_int) / h
-            y = u(i+1, j)*(1-gamma) + u(i+1, j-1)*gamma
+            y = u[i+1][j]*(1-gamma) + u[i+1][j-1]*gamma
         elif (i==0) and (xtilde[1] < j*h):
-            y = u(i, j-1)
+            y = u[i][j-1]
         elif (i==0) and (xtilde[1] > j*h):
-            y = u(i, j+1)
+            y = u[i][j+1]
         else:
             print('We are not in any quadrant at all!')
-            y = None
+            y = 0
         
         return y
     
     ## Visualization of the optimal control and value function
-    '''
+    
     def show_plots():
         
-        [X,Y] = meshgrid(0:h:1, 0:h:1)
-        [X,Y] = transf(X',Y') # transformation into a regular triangular mesh
+        [X,Y] = np.meshgrid(np.arange(0.0,1.0 + h,h), np.arange(0.0,1.0 + h,h))
+        [X,Y] = transf(X.conj().transpose(),Y.conj().transpose()) # transformation into a regular triangular mesh
         uu = u
-        for ii = 0:n
-            for jj = 0:n
-                if jj*h < fb  || jj*h > 1- fb
-                    uu(ii+1, jj+1) = NaN
-                end
-                if uu(ii+1, jj+1)>10
-                    uu(ii+1, jj+1)=10
-                end
-                
-            end
-        end
+        for ii in range(0,n+1):
+            for jj in range(0,n+1):
+                if ((jj*h < fb)  or (jj*h > 1- fb)):
+                    uu[ii][jj] = np.nan
+                if (uu[ii][jj]>10):
+                    uu[ii][jj]=10
+                 
+        fig = plt.figure(figsize=(6,6))
+        #mymap = [parula(2)  0, 1, 0]
+        #colormap(mymap)
+        plt.pcolor(X, Y, d_matr)# plot optimal control
+        #hold on(draw 2 figures on the same graph)
+        #contour(X, Y, uu, 'r')# plot value function
+        plt.contour(X,Y,uu,colors=['red'])
+        plt.axis([0,1,0,1]) #axis([0 1 0 1])
+        plt.show(fig)
+        #shading flat
 
-        figure
-        mymap = [parula(2)  0, 1, 0]
-        colormap(mymap)
-        pcolor(X, Y, d_matr)# plot optimal control
-        hold on
-        contour(X, Y, uu, 'r')# plot value function
-        axis equal
-        axis([0 1 0 1])
-        shading flat
-
-    end
-    '''
+    
     
     ## Transformation to simplex x1 + x2 + x3 = 1
-    '''
-    function [X_tr,Y_tr]=transf(X,Y)
+    
+    def transf(X,Y):
 
-        T=[1 1/2 0 sqrt(3)/2] # linear transformation into a regular triangular mesh
-        X_tr=X Y_tr=Y
-        for i1 = 1:length(X(:,1))
-            for i2 = 1:length(X(:,1))
-                var=(T*[X(i1,i2), Y(i1,i2)]')'
-                X_tr(i1,i2)=var(1)
-                Y_tr(i1,i2)=var(2)
-            end
-        end
-    end
+        T= np.array([[1, 1/2], 
+                     [0, math.sqrt(3)/2]]) # linear transformation into a regular triangular mesh
+        X_tr=X 
+        Y_tr=Y
+        for i1 in range(1, len(X[:,0])):
+            for i2 in range(1, len(X[:,0])):
+                var = np.matmul(T,np.array([X[i1-1][i2-1], Y[i1-1][i2-1]]).conj().transpose()).conj().transpose()
+                X_tr[i1-1][i2-1]=var[0]
+                Y_tr[i1-1][i2-1]=var[1]
+            
+        return [X_tr,Y_tr]
+    
+    ## Model parameters
+    d_max = 3 # MTD
+    sigma = 0.01 # time penalty
+    ba = 2.5 # the benefit per unit of acidification
+    bv = 2 # the benefit from the oxygen per unit of vascularization
+    c = 1 # the cost of production VEGF
+    n_neigh = 4 #the number of cells in the interaction group.
+    fb = 10**(-1.5) # failure barrier, recovery barrier
+    
+    ## Discretization parameters
+    n = 10 # number of meshpoints along one side
+    h = 1 / n
+    # the algorithm terminates when the difference between value functions
+    # in sequential iterations falls below 'iter_tol'
+    iter_tol = 10**(-4)
+    
+    hugeVal = 100000 # a large number ~ infinity
+    tinyVal = 10**(-10) # a small number ~ 0
+    
+    ## Initiallization
+    d_matr = np.zeros((n+1,n+1)) # control
+    u = u_initiation() # value function
 
-    '''
+    ## Main part
+    change = hugeVal # current difference between value functions in sequential iterations
+    k = 0 # iteration number
+    while (change > iter_tol):
+        change = 0
+
+        # alternating meshpoint orderings (“Fast Sweeping”)
+        if (k%4 == 0):
+            irange = range(0,n+1)
+            jrange = range(0,n+1)
+        elif (k%4 == 1):
+            irange = range(0,n+1)
+            jrange = range(n,0,-1)
+        elif (k%4 == 2):
+            irange = range(n,0,-1)
+            jrange = range(n,0,-1)
+        elif (k%4 == 3):
+            irange = range(n,0,-1)
+            jrange = range(0,n+1)
+        else:
+            print('weird k')
+        
+        
+        for i in irange:
+            for j in jrange:
+                print("%d/%d, %d/%d" % (i,len(irange),j,len(jrange)))
+                if (i+j > n): # skip the half of the domain if x1+x2 > 1
+                    d_matr[i][j] = np.nan
+                    continue
+                
+                x1 = i*h
+                x2 = j*h
+                x = np.array([x1, x2])
+                if (x2 > fb) and (x2 < 1-fb): # skip fixed recovery and failure zones
+                    
+                    u_new = hugeVal
+                    for d in [0, d_max]:
+                        if (LA.norm(f(x, d))==0):
+                            continue
+                    
+                        tau = tau_func(x, d, i, j)
+                        xtilde = x + tau * f(x, d) # new state
+                        # value of u under control d
+                        u_possible = tau * K(x, d) + u_interped(u, xtilde, i , j)
+                        
+                        if (u_possible < u_new):
+                            u_new = u_possible
+                            d_new = d
+                        
+                    
+                    
+                    #update the value function u at state x
+                    if (u_new < u[i][j]):
+                        this_change = u[i][j] - u_new
+                        u[i][j] = u_new
+                        d_matr[i][j] = d_new
+                        if (this_change > change):
+                            change = this_change
+        
+        k = k + 1
+        # print the current difference between value functions in sequential iterations
+        print(change)
+    
+    
+        
+    
+    ## Visualization of the optimal control and value function
+        show_plots()
+    
+    
 
 
 ## References
@@ -298,7 +297,7 @@ def Figure3():
 # 2017 Cancer treatment scheduling and dynamic
 # heterogeneity in social dilemmas of tumour acidity
 # and vasculature. Br. J. Cancer 116, 785–792.
-
+Figure3()
 
 
 

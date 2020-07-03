@@ -86,7 +86,6 @@ def Figure3():
             k2 = x1_int[1] - x2_int[1]
             kc = - (x1_int[1] * k1 + x1_int[0] * k2)
             y = - (kc + k1*x[1] + k2*x[0]) / (k1*func[1] + k2*func[0])
-            return y
         
         if (np.isnan(y) or np.isinf(y) or (y <= 0)):
             print('Cannot compute Tau!')
@@ -117,32 +116,32 @@ def Figure3():
           
             #1
         if (xtilde[0] >= i*h) and (xtilde[1] > j*h):
-            x1_int = [i*h, (j+1)*h]
+            x1_int = np.array([i*h, (j+1)*h])
             gamma = LA.norm(xtilde-x1_int) / dist
             y = u[i][j+1]*(1-gamma) + u[i+1][j]*gamma
             #2
         elif (xtilde[0] <= i*h) and (xtilde[1] < j*h) and (i!=0):
-            x1_int = [i*h, (j-1)*h]
+            x1_int = np.array([i*h, (j-1)*h])
             gamma = LA.norm(xtilde-x1_int) / dist
             y = u[i][j-1]*(1-gamma) + u[i-1][j]*gamma    
             #3
         elif (xtilde[0] != i*h) and (abs(xtilde[1] - (j+1)*h) < tinyVal):
-            x1_int = [(i-1)*h, (j+1)*h]
+            x1_int = np.array([(i-1)*h, (j+1)*h])
             gamma = LA.norm(xtilde-x1_int) / h
             y = u[i-1][j+1]*(1-gamma) + u[i][j+1]*gamma
             #4
         elif (abs(xtilde[0] - (i-1)*h) < tinyVal) and (xtilde[1] != (j+1)*h):
-            x1_int = [(i-1)*h, j*h]
+            x1_int = np.array([(i-1)*h, j*h])
             gamma = LA.norm(xtilde-x1_int) / h
             y = u[i-1][j]*(1-gamma) + u[i-1][j+1]*gamma  
             #5
         elif (xtilde[0] != i*h) and (abs(xtilde[1] - (j-1)*h) < tinyVal):
-            x1_int = [(i+1)*h, (j-1)*h]
+            x1_int = np.array([(i+1)*h, (j-1)*h])
             gamma = LA.norm(xtilde-x1_int) / h
             y = u[i+1][j-1]*(1-gamma) + u[i][j-1]*gamma
             #6
         elif (abs(xtilde[0] - (i+1)*h) < tinyVal) and (xtilde[1] != (j-1)*h):
-            x1_int = [(i+1)*h, j*h]
+            x1_int = np.array([(i+1)*h, j*h])
             gamma = LA.norm(xtilde-x1_int) / h
             y = u[i+1][j]*(1-gamma) + u[i+1][j-1]*gamma
         elif (i==0) and (xtilde[1] < j*h):
@@ -175,7 +174,7 @@ def Figure3():
         plt.pcolor(X, Y, d_matr)# plot optimal control
         #hold on(draw 2 figures on the same graph)
         #contour(X, Y, uu, 'r')# plot value function
-        plt.contour(X,Y,uu,colors=['red'],cmap=plt.get_cmap('pastel1'))
+        plt.contour(X,Y,uu,colors=['red'])
         plt.axis([0,1,0,1]) #axis([0 1 0 1])
         plt.show(fig)
         #shading flat
@@ -196,8 +195,7 @@ def Figure3():
                 X_tr[i1-1][i2-1]=var[0]
                 Y_tr[i1-1][i2-1]=var[1]
             
-        return np.array([X_tr,Y_tr])
-
+        return [X_tr,Y_tr]
     
     ## Model parameters
     d_max = 3 # MTD
@@ -209,7 +207,7 @@ def Figure3():
     fb = 10**(-1.5) # failure barrier, recovery barrier
     
     ## Discretization parameters
-    n = 9000 # number of meshpoints along one side
+    n = 10 # number of meshpoints along one side
     h = 1 / n
     # the algorithm terminates when the difference between value functions
     # in sequential iterations falls below 'iter_tol'
@@ -247,7 +245,7 @@ def Figure3():
         
         for i in irange:
             for j in jrange:
-            
+                print("%d/%d, %d/%d" % (i,len(irange),j,len(jrange)))
                 if (i+j > n): # skip the half of the domain if x1+x2 > 1
                     d_matr[i][j] = np.nan
                     continue
@@ -286,7 +284,7 @@ def Figure3():
         print(change)
     
     
-    
+        
     
     ## Visualization of the optimal control and value function
         show_plots()
@@ -299,7 +297,7 @@ def Figure3():
 # 2017 Cancer treatment scheduling and dynamic
 # heterogeneity in social dilemmas of tumour acidity
 # and vasculature. Br. J. Cancer 116, 785–792.
-
+Figure3()
 
 
 

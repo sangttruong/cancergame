@@ -197,6 +197,13 @@ def transf(X,Y):
         
     return [X_tr,Y_tr]
 
+
+## Display time
+def displayTime(seconds):
+    minute, second = divmod(seconds, 60)
+    hour, minute = divmod(minute, 60)
+    return hour, minute, second
+    
 ## Model parameters
 d_max = 3 # MTD
 sigma = 0.01 # time penalty
@@ -250,9 +257,11 @@ while (change > iter_tol):
         for j in jrange:
             elapsedTime = time.time() - start;
             estimatedRemaining = int(elapsedTime * (n*n)/(i*n + j+1) - elapsedTime)
-            sys.stdout.write("\r[%d/%d], [%d/%d], Elapsed: %im %02is ETA: %im%02is " 
-                         % (i, len(irange)-1, j, len(jrange)-1, int(elapsedTime)/60, int(elapsedTime)%60,
-                            estimatedRemaining/60, estimatedRemaining%60))
+            displayElapsed = displayTime(elapsedTime)
+            displayEstimated = displayTime(estimatedRemaining)
+            sys.stdout.write("\r[%d/%d], [%d/%d], Elapsed: %ih %im %is ETA: %ih %im %is " 
+                         % (i, len(irange)-1, j, len(jrange)-1, displayElapsed[0], displayElapsed[1], displayElapsed[2],
+                            displayEstimated[0], displayEstimated[1], displayEstimated[2]))
             sys.stdout.flush()
             if (i+j > n): # skip the half of the domain if x1+x2 > 1
                 d_matr[i][j] = np.nan

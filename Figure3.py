@@ -43,26 +43,20 @@ tiley = 3
 
 ## Initializaion of the value function u
 def u_initiation():
-    u = np.ones((n+1,n+1))*hugeVal
-
+    arr = multiprocessing.Array('d',np.ones((n+1)*(n+1))*hugeVal)
     # skip the half of the domain where x1 + x2 > 1
     for ii in range(0,n+1):
         for jj in range(n-ii+1,n+1):
-            u[ii][jj] = np.nan
-        
+            arr[ii*(n+1)+jj] = math.nan
      
     # value function = 0 at the recovery zone
     for ii in range(0,n+1):
         for jj in range(0,n-ii+1):
             if  (jj*h < fb):
-                u[ii][jj] = 0
+                arr[ii*(n+1)+jj] = 0
                 
-        
-    u = u.flatten()
-    arr = multiprocessing.Array('d',len(u))
-    for i in range (0,len(u)):
-        arr[i] = u[i]
     return arr
+    
 
 ## Instantaneous cost 
 def K(_, d):

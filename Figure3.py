@@ -7,7 +7,7 @@ import time
 import multiprocessing
 
 ## Model parameters
-n = 14
+n = 100
 d_max = 3 # MTD
 sigma = 0.01 # time penalty
 ba = 2.5 # the benefit per unit of acidification
@@ -26,8 +26,8 @@ iter_tol = 10**(-4)
 hugeVal = 100000 # a large number ~ infinity
 tinyVal = 10**(-10) # a small number ~ 0
 
-tilex = 3
-tiley = 3
+tilex = 2
+tiley = 2
 ## The code partially reproduces Figure 3 from paper
 # Optimizing adaptive cancer therapy: dynamic programming and evolutionary game theory,
 # Proceedings of the Royal Society B: Biological Sciences 287: 20192454 (2020)
@@ -251,10 +251,10 @@ if __name__ == '__main__':
             processes = []
             for x in range(0, tilex):
                 for y in range(0, tiley):
-                    istart = x * ((n+1) // tilex)
-                    iend = istart + (n+1) // tilex
-                    jstart = y * ((n+1) // tiley)
-                    jend = jstart + (n+1) // tiley
+                    istart = x * (((n+1) // tilex)+1)
+                    iend = istart + (((n+1) // tilex)+1) if istart + (((n+1) / tilex)+1) <= n+1 else n+1
+                    jstart = y * (((n+1) // tiley)+1)
+                    jend = jstart + (((n+1) // tiley)+1) if jstart + (((n+1) / tiley)+1) <= n+1 else n+1
                     process1 = multiprocessing.Process(target=iteratingBlock, args=[istart, iend, jstart, jend, n+1, u_matr, d_matr, change])
                     processes.append(process1)
             for process in processes:
@@ -296,7 +296,6 @@ if __name__ == '__main__':
     plt.axis([0,1,0,1]) #axis([0 1 0 1])
     plt.show(fig)
     #shading flat
-    print(d_matr[:])
     
     ## References
     # [1] Kaznatcheev A, Vander Velde R, Scott JG, Basanta D.

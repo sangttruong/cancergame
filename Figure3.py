@@ -26,8 +26,8 @@ iter_tol = 10**(-4)
 hugeVal = 100000 # a large number ~ infinity
 tinyVal = 10**(-10) # a small number ~ 0
 
-tilex = 2
-tiley = 2
+tilex = 3
+tiley = 3
 ## The code partially reproduces Figure 3 from paper
 # Optimizing adaptive cancer therapy: dynamic programming and evolutionary game theory,
 # Proceedings of the Royal Society B: Biological Sciences 287: 20192454 (2020)
@@ -199,10 +199,36 @@ def displayTime(seconds):
     minute, second = divmod(seconds, 60)
     hour, minute = divmod(minute, 60)
     return hour, minute, second
+
+def getTilesPoints(n, size):
+    p = size//n
+    i = 0
+    l = []
+    while i < size:
+        l.append(i)
+        i += p
+    if l[-1] != size-1:
+        l.append(size-1)
+    return l
     
-def iteratingBlock(istart, iend, jstart, jend, size, u, d_mat, change):
-    for i in range(istart, iend):
-        for j in range(jstart, jend):
+def iteratingBlock(k, istart, iend, jstart, jend, size, u, d_mat, change):
+    if (k%4 == 0):
+        irange = range(istart,iend)
+        jrange = range(jstart,jend)
+    elif (k%4 == 1):
+        irange = range(istart,iend)
+        jrange = range(jend-1,jstart,-1)
+    elif (k%4 == 2):
+        irange = range(iend-1,istart,-1)
+        jrange = range(jend-1,jstart,-1)
+    elif (k%4 == 3):
+        irange = range(iend-1,istart,-1)
+        jrange = range(jstart,jend)
+    else:
+        print('weird k')
+        
+    for i in irange:
+        for j in jrange:
             if (i+j > n): # skip the half of the domain if x1+x2 > 1
                 d_mat[i*size + j] = math.nan
                 continue
@@ -243,27 +269,33 @@ if __name__ == '__main__':
     start = time.time()
     change = multiprocessing.Value('d', hugeVal)
     
+    x_tiles = getTilesPoints(tilex, n+1)
+    y_tiles = getTilesPoints(tiley, n+1)
+    
     ## Main part
     k = 0 # iteration number
+    lastTime = start
     while (change.value > iter_tol):
         change.value = 0
-        for iter in range(0, 3):
-            processes = []
-            for x in range(0, tilex):
-                for y in range(0, tiley):
-                    istart = x * (((n+1) // tilex)+1)
-                    iend = istart + (((n+1) // tilex)+1) if istart + (((n+1) / tilex)+1) <= n+1 else n+1
-                    jstart = y * (((n+1) // tiley)+1)
-                    jend = jstart + (((n+1) // tiley)+1) if jstart + (((n+1) / tiley)+1) <= n+1 else n+1
-                    process1 = multiprocessing.Process(target=iteratingBlock, args=[istart, iend, jstart, jend, n+1, u_matr, d_matr, change])
-                    processes.append(process1)
-            for process in processes:
-                process.start()
-            for process in processes:
-                process.join()
+        processes = []
+        for ipair in zip(x_tiles,x_tiles[1:]):
+            for jpair in zip(y_tiles,y_tiles[1:]):
+                istart = ipair[0]
+                iend = ipair[1] + 1
+                jstart = jpair[0]
+                jend = jpair[1] + 1
+                process1 = multiprocessing.Process(target=iteratingBlock, 
+                                                   args=[k, istart, iend, jstart, jend, n+1, u_matr, d_matr, change])
+                processes.append(process1)
+        for process in processes:
+            process.start()
+        for process in processes:
+            process.join()
     
         # print the current difference between value functions in sequential iterations
-        print(change.value)
+        k = k + 1
+        print("Iteration %d: Change:  %.5f, took %.5f seconds" % (k, change.value, time.time()-lastTime))
+        lastTime = time.time()
         #totalTime = totalTime + time.time() - start
     
     seconds = time.time() - start

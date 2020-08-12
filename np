@@ -1,0 +1,59 @@
+[33mcommit 99b2bef75354b93dc5982475c0a39b10a801fcde[m[33m ([m[1;36mHEAD -> [m[1;32mmaster[m[33m)[m
+Author: Desktop <anh.t.le22@gmail.com>
+Date:   Fri Jul 17 11:47:35 2020 -0400
+
+    Remove time estimation/Now a func that takes arg n
+
+[33mcommit f3aabde4145dff1ae689aabf4a405918d5096fe3[m[33m ([m[1;31morigin/master[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: Desktop <anh.t.le22@gmail.com>
+Date:   Tue Jul 7 23:13:43 2020 -0400
+
+    Final Working version of Figure3.py
+
+[33mcommit 7636cb040dc9b42603db711666119d743455087f[m
+Author: Desktop <anh.t.le22@gmail.com>
+Date:   Tue Jul 7 23:01:34 2020 -0400
+
+    Working version of Figure3.py
+
+[33mcommit 95500a688b7bbbb49fadf088b03741360fc43d21[m
+Author: Desktop <anh.t.le22@gmail.com>
+Date:   Fri Jul 3 01:04:17 2020 -0400
+
+    more updates on python code
+
+[33mcommit e95b8a1089db09bf536fad7bf7cb09e984f44605[m
+Author: Desktop <anh.t.le22@gmail.com>
+Date:   Wed Jul 1 11:20:21 2020 -0400
+
+    update the translation code
+
+[33mcommit b847d8f3bcb2fd59a6828ff2123d19b253a4bfe8[m
+Author: Desktop <anh.t.le22@gmail.com>
+Date:   Thu Jun 25 23:04:20 2020 -0400
+
+    Move inner functions to the top of the code
+
+[33mcommit bffac4763d13c77e9081582f8daa753a6f92442d[m
+Author: Desktop <anh.t.le22@gmail.com>
+Date:   Thu Jun 25 22:46:50 2020 -0400
+
+    Rough translation of Figure3.m to Figure3.py
+
+[33mcommit 5dfadb2b5f2cca23bb353c650e56486652ad5ab6[m
+Author: Desktop <anh.t.le22@gmail.com>
+Date:   Fri Jun 19 12:27:26 2020 -0400
+
+    Update over_time function in EvolDynamics
+
+[33mcommit a0262c6228cc8854c7ec627a27a28a569a965010[m
+Author: Desktop <anh.t.le22@gmail.com>
+Date:   Thu Jun 18 15:26:34 2020 -0400
+
+    Add notebook calculating Evolutionary Dynamics
+
+[33mcommit d289ab82a46fd1ad0a064d1df529cab4114131c7[m
+Author: Sang Truong <sangtruong_2021@depauw.edu>
+Date:   Thu Jun 18 14:38:47 2020 -0400
+
+    Create ReadMe.md

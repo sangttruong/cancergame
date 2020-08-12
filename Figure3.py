@@ -4,6 +4,30 @@ import math
 import matplotlib.pyplot as plt
 import sys
 import time
+import multiprocessing
+
+## Model parameters
+n = 100
+d_max = 3 # MTD
+sigma = 0.01 # time penalty
+ba = 2.5 # the benefit per unit of acidification
+bv = 2 # the benefit from the oxygen per unit of vascularization
+c = 1 # the cost of production VEGF
+n_neigh = 4 #the number of cells in the interaction group.
+fb = 10**(-1.5) # failure barrier, recovery barrier
+
+## Discretization parameters
+#n = 100 # number of meshpoints along one side
+h = 1 / n
+# the algorithm terminates when the difference between value functions
+# in sequential iterations falls below 'iter_tol'
+iter_tol = 10**(-4)
+
+hugeVal = 100000 # a large number ~ infinity
+tinyVal = 10**(-10) # a small number ~ 0
+
+tilex = 3
+tiley = 3
 ## The code partially reproduces Figure 3 from paper
 # Optimizing adaptive cancer therapy: dynamic programming and evolutionary game theory,
 # Proceedings of the Royal Society B: Biological Sciences 287: 20192454 (2020)
@@ -18,22 +42,21 @@ import time
 ## Helping functions
 
 ## Initializaion of the value function u
-
 def u_initiation():
-    u = np.ones((n+1,n+1))*hugeVal
-
+    arr = multiprocessing.Array('d',np.ones((n+1)*(n+1))*hugeVal)
     # skip the half of the domain where x1 + x2 > 1
     for ii in range(0,n+1):
         for jj in range(n-ii+1,n+1):
-            u[ii][jj] = np.nan
-        
+            arr[ii*(n+1)+jj] = math.nan
      
     # value function = 0 at the recovery zone
     for ii in range(0,n+1):
         for jj in range(0,n-ii+1):
             if  (jj*h < fb):
-                u[ii][jj] = 0
-    return u
+                arr[ii*(n+1)+jj] = 0
+                
+    return arr
+    
 
 ## Instantaneous cost 
 def K(_, d):
@@ -96,7 +119,8 @@ def tau_func(x, d, i, j):
 ## Return value funcion at state xtilde
 # u interped at (x + tau * f(x,b))
 def u_interped(u, xtilde, i, j):
-    
+    size = int(math.sqrt(len(u)))
+    u = np.array(u[:]).reshape(size,size)
     dist = h*math.sqrt(2)
     
     # there are 6 possible combinations of 2 neighboring meshpoints.
@@ -152,36 +176,8 @@ def u_interped(u, xtilde, i, j):
         print('We are not in any quadrant at all!')
         y = 0
     
-    return y
+    return y    
 
-## Visualization of the optimal control and value function
-
-def show_plots():
-    
-    [X,Y] = np.meshgrid(np.arange(0.0,1.0 + h,h), np.arange(0.0,1.0 + h,h))
-    [X,Y] = transf(X.conj().transpose(),Y.conj().transpose()) # transformation into a regular triangular mesh
-    uu = u
-    for ii in range(0,n+1):
-        for jj in range(0,n+1):
-            if ((jj*h < fb)  or (jj*h > 1- fb)):
-                uu[ii][jj] = np.nan
-            if (uu[ii][jj]>10):
-                uu[ii][jj]=10
-             
-    fig = plt.figure(figsize=(6,6))
-    #mymap = [parula(2)  0, 1, 0]
-    #colormap(mymap)
-    plt.pcolor(X, Y, d_matr)# plot optimal control
-    #hold on(draw 2 figures on the same graph)
-    #contour(X, Y, uu, 'r')# plot value function
-    plt.contour(X,Y,uu,colors=['red'])
-    plt.axis([0,1,0,1]) #axis([0 1 0 1])
-    plt.show(fig)
-    #shading flat
-
-
-
-## Transformation to simplex x1 + x2 + x3 = 1
 
 def transf(X,Y):
 
@@ -203,70 +199,40 @@ def displayTime(seconds):
     minute, second = divmod(seconds, 60)
     hour, minute = divmod(minute, 60)
     return hour, minute, second
+
+def getTilesPoints(n, size):
+    p = size//n
+    i = 0
+    l = []
+    while i < size:
+        l.append(i)
+        i += p
+    if l[-1] != size-1:
+        l.append(size-1)
+    return l
     
-## Model parameters
-d_max = 3 # MTD
-sigma = 0.01 # time penalty
-ba = 2.5 # the benefit per unit of acidification
-bv = 2 # the benefit from the oxygen per unit of vascularization
-c = 1 # the cost of production VEGF
-n_neigh = 4 #the number of cells in the interaction group.
-fb = 10**(-1.5) # failure barrier, recovery barrier
-
-## Discretization parameters
-n = 9000 # number of meshpoints along one side
-h = 1 / n
-# the algorithm terminates when the difference between value functions
-# in sequential iterations falls below 'iter_tol'
-iter_tol = 10**(-4)
-
-hugeVal = 100000 # a large number ~ infinity
-tinyVal = 10**(-10) # a small number ~ 0
-
-## Initiallization
-d_matr = np.zeros((n+1,n+1)) # control
-u = u_initiation() # value function
-
-
-
-## Main part
-change = hugeVal # current difference between value functions in sequential iterations
-k = 0 # iteration number
-while (change > iter_tol):
-    change = 0
-
-    # alternating meshpoint orderings (“Fast Sweeping”)
+def iteratingBlock(k, istart, iend, jstart, jend, size, u, d_mat, change):
     if (k%4 == 0):
-        irange = range(0,n+1)
-        jrange = range(0,n+1)
+        irange = range(istart,iend)
+        jrange = range(jstart,jend)
     elif (k%4 == 1):
-        irange = range(0,n+1)
-        jrange = range(n,0,-1)
+        irange = range(istart,iend)
+        jrange = range(jend-1,jstart,-1)
     elif (k%4 == 2):
-        irange = range(n,0,-1)
-        jrange = range(n,0,-1)
+        irange = range(iend-1,istart,-1)
+        jrange = range(jend-1,jstart,-1)
     elif (k%4 == 3):
-        irange = range(n,0,-1)
-        jrange = range(0,n+1)
+        irange = range(iend-1,istart,-1)
+        jrange = range(jstart,jend)
     else:
         print('weird k')
-    
-    start = time.time()
-    
+        
     for i in irange:
         for j in jrange:
-            elapsedTime = time.time() - start;
-            estimatedRemaining = int(elapsedTime * (n*n)/(i*n + j+1) - elapsedTime)
-            displayElapsed = displayTime(elapsedTime)
-            displayEstimated = displayTime(estimatedRemaining)
-            sys.stdout.write("\r[%d/%d], [%d/%d], Elapsed: %ih %im %is ETA: %ih %im %is " 
-                         % (i, len(irange)-1, j, len(jrange)-1, displayElapsed[0], displayElapsed[1], displayElapsed[2],
-                            displayEstimated[0], displayEstimated[1], displayEstimated[2]))
-            sys.stdout.flush()
             if (i+j > n): # skip the half of the domain if x1+x2 > 1
-                d_matr[i][j] = np.nan
+                d_mat[i*size + j] = math.nan
                 continue
-            
+    
             x1 = i*h
             x2 = j*h
             x = np.array([x1, x2])
@@ -281,56 +247,93 @@ while (change > iter_tol):
                     xtilde = x + tau * f(x, d) # new state
                     # value of u under control d
                     u_possible = tau * K(x, d) + u_interped(u, xtilde, i , j)
-                    
                     if (u_possible < u_new):
                         u_new = u_possible
                         d_new = d
-                    
-                
                 
                 #update the value function u at state x
-                if (u_new < u[i][j]):
-                    this_change = u[i][j] - u_new
-                    u[i][j] = u_new
-                    d_matr[i][j] = d_new
-                    if (this_change > change):
-                        change = this_change
-    k = k + 1
-    # print the current difference between value functions in sequential iterations
-    print(change)
-
-
+                if (u_new < u[i*size + j]):
+                    this_change = u[i*size + j] - u_new                
+                    u[i*size + j] = u_new
+                    d_mat[i*size + j] = d_new
+                    if (this_change > change.value):
+                        change.value = this_change
     
 
-## Visualization of the optimal control and value function
-[X,Y] = np.meshgrid(np.arange(0.0,1.0 + h,h), np.arange(0.0,1.0 + h,h))
-[X,Y] = transf(X.conj().transpose(),Y.conj().transpose()) # transformation into a regular triangular mesh
-uu = u
-for ii in range(0,n+1):
-    for jj in range(0,n+1):
-        if ((jj*h < fb)  or (jj*h > 1- fb)):
-            uu[ii][jj] = np.nan
-        if (uu[ii][jj]>10):
-            uu[ii][jj]=10
-         
-fig = plt.figure(figsize=(6,6))
-#mymap = [parula(2)  0, 1, 0]
-#colormap(mymap)
-plt.pcolor(X, Y, d_matr)# plot optimal control
-#hold on(draw 2 figures on the same graph)
-#contour(X, Y, uu, 'r')# plot value function
-plt.contour(X,Y,uu,colors=['red'])
-plt.axis([0,1,0,1]) #axis([0 1 0 1])
-plt.show(fig)
-#shading flat
+if __name__ == '__main__':     
+    ## Initiallization
 
-
-
-## References
-# [1] Kaznatcheev A, Vander Velde R, Scott JG, Basanta D.
-# 2017 Cancer treatment scheduling and dynamic
-# heterogeneity in social dilemmas of tumour acidity
-# and vasculature. Br. J. Cancer 116, 785–792.
+    d_matr = multiprocessing.Array('d', (n+1)*(n+1))
+    u_matr = u_initiation() # value function
+    
+    start = time.time()
+    change = multiprocessing.Value('d', hugeVal)
+    
+    x_tiles = getTilesPoints(tilex, n+1)
+    y_tiles = getTilesPoints(tiley, n+1)
+    
+    ## Main part
+    k = 0 # iteration number
+    lastTime = start
+    while (change.value > iter_tol):
+        change.value = 0
+        processes = []
+        for ipair in zip(x_tiles,x_tiles[1:]):
+            for jpair in zip(y_tiles,y_tiles[1:]):
+                istart = ipair[0]
+                iend = ipair[1] + 1
+                jstart = jpair[0]
+                jend = jpair[1] + 1
+                process1 = multiprocessing.Process(target=iteratingBlock, 
+                                                   args=[k, istart, iend, jstart, jend, n+1, u_matr, d_matr, change])
+                processes.append(process1)
+        for process in processes:
+            process.start()
+        for process in processes:
+            process.join()
+    
+        # print the current difference between value functions in sequential iterations
+        k = k + 1
+        print("Iteration %d: Change:  %.5f, took %.5f seconds" % (k, change.value, time.time()-lastTime))
+        lastTime = time.time()
+        #totalTime = totalTime + time.time() - start
+    
+    seconds = time.time() - start
+    displayTotalTime = displayTime(seconds)
+    print("Total time is: %ih %im %is (%.5f seconds)" %
+          (displayTotalTime[0], displayTotalTime[1], displayTotalTime[2], seconds))
+        
+    
+    ## Visualization of the optimal control and value function
+    d_matr = np.array(d_matr[:])
+    d_matr.resize(n+1,n+1)
+    [X,Y] = np.meshgrid(np.arange(0.0,1.0 + h,h), np.arange(0.0,1.0 + h,h))
+    [X,Y] = transf(X.conj().transpose(),Y.conj().transpose()) # transformation into a regular triangular mesh
+    uu = np.array(u_matr[:])
+    uu.resize(n+1,n+1)
+    for ii in range(0,n+1):
+        for jj in range(0,n+1):
+            if ((jj*h < fb)  or (jj*h > 1- fb)):
+                uu[ii][jj] = np.nan
+            if (uu[ii][jj]>10):
+                uu[ii][jj]=10
+             
+    fig = plt.figure(figsize=(6,6))
+    #mymap = [parula(2)  0, 1, 0]
+    #colormap(mymap)
+    plt.pcolor(X, Y, d_matr)# plot optimal control
+    #hold on(draw 2 figures on the same graph)
+    #contour(X, Y, uu, 'r')# plot value function
+    plt.contour(X,Y,uu,colors=['red'])
+    plt.axis([0,1,0,1]) #axis([0 1 0 1])
+    plt.show(fig)
+    #shading flat
+    
+    ## References
+    # [1] Kaznatcheev A, Vander Velde R, Scott JG, Basanta D.
+    # 2017 Cancer treatment scheduling and dynamic
+    # heterogeneity in social dilemmas of tumour acidity
+    # and vasculature. Br. J. Cancer 116, 785–792.
 
 
 

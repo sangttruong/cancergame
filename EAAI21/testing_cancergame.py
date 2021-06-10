@@ -88,7 +88,10 @@ def test10():
                             eq=False)
     plt.show() 
 
+# Animated version is currently out-of-order on local machine
 ############################################# Animated version #############################################
+
+
 
 def test11():
     parameter_values =  [ [1],[2],[3], [4],[5],[6], [7],[7],[7] ]

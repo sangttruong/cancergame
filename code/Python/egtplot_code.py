@@ -889,6 +889,8 @@ def plot_static(
         cbar_ax.set_title("Speed", fontsize=fontsize)
         fig.colorbar(im, cax=cbar_ax)
 
+    # The dynamic movement in the state space of cancer game
+    # ics: contains 3 subpopulation proportions
     if timeStamp == None or timeStamp >= len(ics):
         timestamp = len(ics)
     else:

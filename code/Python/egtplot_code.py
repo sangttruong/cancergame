@@ -149,6 +149,7 @@ def grid_ics():
 
     # create a shapely polygon based on the triangle
     poly = Polygon(zip(triangleline[0], triangleline[1]))
+    # print("Poly: " + str(poly))
     min_x, min_y, max_x, max_y = poly.bounds
     grid_size = 0.12
     n = int(np.ceil(np.abs(max_x - min_x) / grid_size))
@@ -170,6 +171,7 @@ def grid_ics():
 
     # define reference points
     p1, p2, p3 = triangleline.T[:-1]
+    # print("p1: " + str(p1) + "\n p2: " + str(p2) + "\n p3: " + str(p3))
 
     # prep a numpy array to be populated below
     starts = np.zeros([len(points), 3])
@@ -187,6 +189,7 @@ def grid_ics():
     # make sure the sum of each point's coordinates sum to 1 so that the point
     # lies in the simplex
     ics = (starts.T / np.sum(starts, axis=1)).T
+    # print("Inital:  ", ics)
 
     return ics
 
@@ -607,9 +610,10 @@ def get_cols_and_rows(payoff_entries):
 
     return n_cols, n_rows
 
-
+# Fix landscape
 def landscape(x, time, payoffs):
     ax = np.dot(payoffs, x)
+    # print(x * (ax - np.dot(x, ax)))
     return x * (ax - np.dot(x, ax))
 
 
@@ -895,11 +899,15 @@ def plot_static(
         timestamp = len(ics)
     else:
         timestamp = timeStamp
+
     # loop through each initial condition
     for x in range(timestamp):
 
         # solve the ODEs and project to triangular coordinates
         yout = odeint(landscape, ics[x], time, args=(payoff_mat,))
+        # print("After differentia", yout)
+        # print("Function landscape: ", landscape)
+        # print("Array: ", ics[x])
         plot_values = np.dot(proj, yout.T)
         xx = plot_values[0]
         yy = plot_values[1]
@@ -947,7 +955,7 @@ def plot_static(
         except ValueError:
             continue
 
-    return fig
+    return fig, ics
 
 
 def plot_animated(

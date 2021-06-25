@@ -144,7 +144,7 @@ def grid_ics():
     """This function generates initial conditions arranged on a grid within
     the simplex. This is more complicated than simply making a lattice in the
     unit cube and then projecting to triangular coordinates because not all
-    points will be evenly spaced in the trinagular coordinates (the projection
+    points will be evenly spaced in the triangular coordinates (the projection
     is not a linear transformation)."""
 
     # create a shapely polygon based on the triangle
@@ -611,10 +611,11 @@ def get_cols_and_rows(payoff_entries):
     return n_cols, n_rows
 
 # Fix landscape
-def landscape(x, time, payoffs):
+def landscape(x, time, payoffs, d=0):
     ax = np.dot(payoffs, x)
-    # print(x * (ax - np.dot(x, ax)))
-    return x * (ax - np.dot(x, ax))
+    ret_val = x * (ax - np.dot(x, ax))
+    ret_val[0] = ret_val[0] - d
+    return ret_val
 
 
 def custom_to_standard(payoff_func, entries):
@@ -638,7 +639,8 @@ def plot_static(
     display_parameters=True,
     custom_func=None,
     vert_labels=["X", "Y", "Z"],
-    timeStamp = None
+    timeStamp = None,
+    d = 0
 ):
     """Function to plot static evolutionary game solutions.
 
@@ -904,7 +906,7 @@ def plot_static(
     for x in range(timestamp):
 
         # solve the ODEs and project to triangular coordinates
-        yout = odeint(landscape, ics[x], time, args=(payoff_mat,))
+        yout = odeint(landscape, ics[x], time, args=(payoff_mat,d,))
         # print("After differentia", yout)
         # print("Function landscape: ", landscape)
         # print("Array: ", ics[x])

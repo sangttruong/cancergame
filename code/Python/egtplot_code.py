@@ -173,6 +173,7 @@ def grid_ics():
     p1, p2, p3 = triangleline.T[:-1]
     # print("p1: " + str(p1) + "\n p2: " + str(p2) + "\n p3: " + str(p3))
 
+
     # prep a numpy array to be populated below
     starts = np.zeros([len(points), 3])
 
@@ -640,7 +641,7 @@ def plot_static(
     custom_func=None,
     vert_labels=["X", "Y", "Z"],
     timeStamp = None,
-    d = 0
+    d = 0, timed = 0
 ):
     """Function to plot static evolutionary game solutions.
 
@@ -906,7 +907,11 @@ def plot_static(
     for x in range(timestamp):
 
         # solve the ODEs and project to triangular coordinates
-        yout = odeint(landscape, ics[x], time, args=(payoff_mat,d,))
+        if timed != 0 and d != 0:
+            ics[x][0] = ics[x][0] - d
+            yout = odeint(landscape, ics[x], time, args=(payoff_mat,))
+        else: yout = odeint(landscape, ics[x], time, args=(payoff_mat,))
+
         # print("After differentia", yout)
         # print("Function landscape: ", landscape)
         # print("Array: ", ics[x])

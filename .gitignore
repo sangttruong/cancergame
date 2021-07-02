@@ -6,4 +6,5 @@ bib/
 code/Python/__pycache__/
 
 # Python + Matlab for testing (unused on Github)
-code/*
+code/Python/
+code/Matlab/

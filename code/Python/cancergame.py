@@ -13,7 +13,7 @@ def init_cancerGDV(
     iter = 500000,
     rb = 10**(-1.5),
     fb = 10**(-1.5),
-    d = 0
+    d = 0, timeup = None, timelow = None 
 ):
     """Function to plot static evolution of cancer game.
 
@@ -51,9 +51,14 @@ def init_cancerGDV(
         fb (float): failure barrier;
             default 10**(-1.5)
         
-        d (float): time-dependent intensity; 
+        d (float): constrant medicine; 
             default 0
         
+        timeup (int): upper time threshold of adding d;
+            default None
+
+        timelow (int): lower time threshold of adding d;
+            default None
     Returns
     -------
         A matplotlib figure object containing the designated simplex.
@@ -76,9 +81,14 @@ def init_cancerGDV(
             sum_p += p**k
         
         q = q + q * (1 - q) * (bv/(n_neigh+1) * sum_p - c) * dt
-        if t >= 1500000:
-            d = 0
-            p = p + p * (1 - p) * (ba/(n_neigh+1) - (bv - c) * q - d) * dt
+        if d != 0:
+            if timeup == None:
+                timeup = iter-1
+            if timelow == None:
+                timelow = 0
+
+            if t >= timelow and t < timeup:    
+                p = p + p * (1 - p) * (ba/(n_neigh+1) - (bv - c) * q - d) * dt
         else:
             p = p + p * (1 - p) * (ba/(n_neigh+1) - (bv - c) * q) * dt
 
@@ -121,6 +131,16 @@ def init_cancerGDV(
     ax[1].plot(np.arange(0, length, 1), xvpoints, label="VOP")
 
     ax[1].set_ylim(0, 1)
+
+    print("Time low input: ", timelow)
+    print("Time up input: ", timeup)
+
+    # Color the changing part
+    if timelow != None and timeup != None:
+        if timeup < t:
+            ax[1].axvspan(timelow, timeup, facecolor="red", alpha=0.25)
+        else:
+            ax[1].axvspan(timelow, t, facecolor="red", alpha=0.25)
 
     ax[1].set_title("3-D representation of cancer game", fontweight="bold", fontsize='x-large')
     ax[1].set_xlabel("Time", fontweight="bold", fontsize='x-large')

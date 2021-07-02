@@ -1,4 +1,4 @@
-# Design Consideration in the game CureIt
+# Design Consideration in the game CancerGDV
 
 ## References
 * Cancer treatment scheduling and dynamic heterogeneity in social dilemmas of tumour acidity and vasculature: https://pubmed.ncbi.nlm.nih.gov/28183139/

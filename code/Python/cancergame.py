@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-def init_cancergame(
+def init_cancerGDV(
     xd = 0.04, 
     xg = 0.9, 
     xv = 0.06,

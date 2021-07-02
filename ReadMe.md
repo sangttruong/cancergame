@@ -17,9 +17,11 @@ git clone https://github.com/sangttruong/cancergame
 We also provide a sample visualization from our code. Some demos:
 
 ![default-game](https://github.com/hieumtran/cancergame/blob/master/figures/default.png)
-<h1 align="center">Initialize cancer game without user input</h1>
-![user-input](https://github.com/hieumtran/cancergame/blob/master/figures/user_input.png)
-<h1 align="center">Initialize cancer game with user input</h1>
+<div align="center">Initialize cancer game without user input</div>
+
+![user-input](https://github.com/hieumtran/cancergame/blob/master/figures/user_input.png) 
+<div align="center">Initialize cancer game with user input</div>
+
 ## Dependencies
 * python (version>=3.7)
 * numpy (version>=1.19.3)

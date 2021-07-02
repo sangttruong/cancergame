@@ -4,7 +4,3 @@ bib/
 
 # Python cache
 code/Python/__pycache__/
-
-# Python + Matlab for testing (unused on Github)
-code/Python/
-code/Matlab/

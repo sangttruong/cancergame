@@ -112,6 +112,8 @@ def init_cancerGDV(
 
     # Constructing plot for visualization of the CancerGDV
     fig, ax = plt.subplots(2, figsize=(18,15))
+    
+    # Visualization of 2-D system
     ax[0].plot(qpoints, ppoints)
     ax[0].axhline(succeed, color="r", linestyle='dashed', label="Succeed barrier")
     ax[0].axhline(fail, color="g", linestyle='dashed', label="Fail barrier")
@@ -124,6 +126,7 @@ def init_cancerGDV(
     ax[0].set_ylabel("q points", fontweight="bold", fontsize='x-large')
     ax[0].legend()
 
+    # Visualization of 3-D system
     length = len(xgpoints)
     ax[1].plot(np.arange(0, length, 1), xgpoints, label="GLY")
     ax[1].plot(np.arange(0, length, 1), xdpoints, label="DEF")

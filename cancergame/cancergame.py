@@ -63,16 +63,18 @@ def init_cancerGDV(
     -------
         A matplotlib figure object containing the designated simplex.
     """
+    # Evolution of subpopulation propotions
     xdpoints = [xd]
     xgpoints = [xg]
     xvpoints = [xv]
     ppoints = [xg]
     qpoints = [xv/(xv + xd)]
 
-    succeed = [rb]
-    fail = [1-fb]
+    succeed = rb
+    fail = 1-fb
 
     for t in range(iter):
+        # 2-D tranformation
         q = xv/(xv + xd)
         p = xg
 
@@ -80,18 +82,15 @@ def init_cancerGDV(
         for k in range(0, n_neigh):
             sum_p += p**k
         
+        # Replicator dynamic in 2-D transformation
         q = q + q * (1 - q) * (bv/(n_neigh+1) * sum_p - c) * dt
-        if d != 0:
-            if timeup == None:
-                timeup = iter-1
-            if timelow == None:
-                timelow = 0
-
+        if d != 0 and timeup != None and timelow != None:
             if t >= timelow and t < timeup:    
                 p = p + p * (1 - p) * (ba/(n_neigh+1) - (bv - c) * q - d) * dt
         else:
             p = p + p * (1 - p) * (ba/(n_neigh+1) - (bv - c) * q) * dt
-
+        
+        # Convert from 2-D to 3-D
         xd = (1 - q) * (1 - p)
         xg = p
         xv = (1 - p) * q
@@ -102,19 +101,20 @@ def init_cancerGDV(
         xdpoints.append(xd)
         xgpoints.append(xg)
         xvpoints.append(xv)
-
-        if p < succeed[0]:
+        
+        # Terminal condition
+        if p < succeed:
             print("Therapy succeed")
             break
-        elif p > fail[0]:
+        elif p > fail:
             print("Therapy fail")
             break
 
-    # Constructing plot
+    # Constructing plot for visualization of the CancerGDV
     fig, ax = plt.subplots(2, figsize=(18,15))
     ax[0].plot(qpoints, ppoints)
-    ax[0].axhline(succeed[0], color="r", linestyle='dashed', label="Succeed barrier")
-    ax[0].axhline(fail[0], color="g", linestyle='dashed', label="Fail barrier")
+    ax[0].axhline(succeed, color="r", linestyle='dashed', label="Succeed barrier")
+    ax[0].axhline(fail, color="g", linestyle='dashed', label="Fail barrier")
 
     ax[0].set_xlim(0, 1)
     ax[0].set_ylim(0, 1)
@@ -124,16 +124,12 @@ def init_cancerGDV(
     ax[0].set_ylabel("q points", fontweight="bold", fontsize='x-large')
     ax[0].legend()
 
-
     length = len(xgpoints)
     ax[1].plot(np.arange(0, length, 1), xgpoints, label="GLY")
     ax[1].plot(np.arange(0, length, 1), xdpoints, label="DEF")
     ax[1].plot(np.arange(0, length, 1), xvpoints, label="VOP")
 
     ax[1].set_ylim(0, 1)
-
-    print("Time low input: ", timelow)
-    print("Time up input: ", timeup)
 
     # Color the changing part
     if timelow != None and timeup != None:

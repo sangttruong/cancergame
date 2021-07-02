@@ -1,5 +1,14 @@
 # Design Consideration in the game CancerGDV
 
+## Introduction
+
+### Demo on Colab
+
+
+## Dependencies
+
+## Acknowledgments
+
 ## References
 * Cancer treatment scheduling and dynamic heterogeneity in social dilemmas of tumour acidity and vasculature: https://pubmed.ncbi.nlm.nih.gov/28183139/
 * Optimizing Cancer Treatment Using Game Theory: https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6947530/

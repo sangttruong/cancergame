@@ -35,7 +35,7 @@ We also provide a sample visualization from our code. Some demos:
 This repository is currently maintained by Sang Truong, Hieu Tran, and Steven Borgaert. 
 
 ## Acknowledgements
-Andy Le, Brian Howard, Dee Wu
+We thank Andy Le, Brian Howard, Dee Wu for their initial work during Summer 2020.
 
 ## References
 * Cancer treatment scheduling and dynamic heterogeneity in social dilemmas of tumour acidity and vasculature: https://pubmed.ncbi.nlm.nih.gov/28183139/

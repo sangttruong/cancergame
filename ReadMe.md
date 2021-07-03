@@ -32,10 +32,10 @@ We also provide a sample visualization from our code. Some demos:
 --> 
 
 ## Authors
-This repository was developed by:
-* **Sang T.Truong** - [sangttruong](https://github.com/sangttruong)
-* **Hieu M.Tran** - [hieumtran](https://github.com/hieumtran)
-* **Andy Le** - [andytle](https://github.com/andytle)
+This repository is currently maintained by Sang Truong, Hieu Tran, and Steven Borgaert. 
+
+## Acknowledgements
+Andy Le, Brian Howard, Dee Wu
 
 ## References
 * Cancer treatment scheduling and dynamic heterogeneity in social dilemmas of tumour acidity and vasculature: https://pubmed.ncbi.nlm.nih.gov/28183139/
